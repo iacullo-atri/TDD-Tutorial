@@ -7,43 +7,37 @@ class HomePageTest(TestCase):
     def test_uses_home_template(self):
         url = reverse('lists:index')
         response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'lists/index.html')
     
-    def test_can_save_a_POST_request(self):
-        url = reverse('lists:index')
-        data={'item_text': 'A new list item'}
-        self.client.post(url, data)
+class ListViewTest(TestCase):
+    def test_uses_list_template(self):
+        url = reverse('lists:view_list')
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, 'lists/list.html')
 
-        self.assertEqual(Item.objects.count(), 1)
-        saved_item = Item.objects.first()
-        self.assertEqual(saved_item.text, 'A new list item')
-
-    def test_redirects_after_POST(self):
-        url = reverse('lists:index')
-        data={'item_text': 'A new list item'}
-        response = self.client.post(url, data)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], '/')
     
-    def test_only_saves_items_when_necessary(self):
-        url = reverse('lists:index')
-        self.client.get(url)
-        self.assertEqual(Item.objects.count(), 0)
-    
-    def test_displays_all_list_items(self):
+    def test_displays_all_items(self):
         Item.objects.create(text='itemey 1')
         Item.objects.create(text='itemey 2')
 
-        url = reverse('lists:index')
+        url = '/lists/the-only-list-in-the-world/'
         response = self.client.get(url)
-        body = response.content.decode()
 
-        self.assertIn('itemey 1', body)
-        self.assertIn('itemey 2', body)
+        self.assertContains(response, 'itemey 1')
+        self.assertContains(response, 'itemey 2')
 
+class NewListViewTest(TestCase):
+    def test_can_save_a_POST_request(self):
+        url = reverse('lists:new_list')
+        self.client.post(url, data={'item_text': 'A new list item'})
+        self.assertEqual(Item.objects.count(), 1)
+        new_item = Item.objects.first()
+        self.assertEqual(new_item.text, 'A new list item')
+    
+    def test_redirects_after_POST(self):
+        url = reverse('lists:new_list')
+        response = self.client.post(url, data={'item_text': 'A new list item'})
+        self.assertRedirects(response, reverse('lists:view_list'))
 
 class ItemModelTest(TestCase):
 
