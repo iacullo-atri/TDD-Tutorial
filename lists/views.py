@@ -2,4 +2,6 @@ from django.http import HttpResponse
 from django.shortcuts import render
 
 def index(request):
-    return render(request, 'lists/index.html')
+    return render(request, 'lists/index.html', {
+        'new_item_text': request.POST.get('item_text', ''),
+    })
