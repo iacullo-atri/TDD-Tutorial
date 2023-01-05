@@ -13,9 +13,37 @@ class HomePageTest(TestCase):
     
     def test_can_save_a_POST_request(self):
         url = reverse('lists:index')
-        response = self.client.post(url, data={'item_text': 'A new list item'})
-        self.assertIn('A new list item', response.content.decode())
-        self.assertTemplateUsed(response, 'lists/index.html')
+        data={'item_text': 'A new list item'}
+        self.client.post(url, data)
+
+        self.assertEqual(Item.objects.count(), 1)
+        saved_item = Item.objects.first()
+        self.assertEqual(saved_item.text, 'A new list item')
+
+    def test_redirects_after_POST(self):
+        url = reverse('lists:index')
+        data={'item_text': 'A new list item'}
+        response = self.client.post(url, data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/')
+    
+    def test_only_saves_items_when_necessary(self):
+        url = reverse('lists:index')
+        self.client.get(url)
+        self.assertEqual(Item.objects.count(), 0)
+    
+    def test_displays_all_list_items(self):
+        Item.objects.create(text='itemey 1')
+        Item.objects.create(text='itemey 2')
+
+        url = reverse('lists:index')
+        response = self.client.get(url)
+        body = response.content.decode()
+
+        self.assertIn('itemey 1', body)
+        self.assertIn('itemey 2', body)
+
 
 class ItemModelTest(TestCase):
 
